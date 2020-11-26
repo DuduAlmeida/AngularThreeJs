@@ -1,0 +1,111 @@
+//Font-family:
+@import url("https://fonts.googleapis.com/css2?family=Abel&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Abel", sans-serif;
+    text-transform: uppercase;
+}
+
+html,
+body,
+app-root {
+    height: 100vh;
+    font-size: 10px;
+}
+
+
+body {
+    background: var(--color-background) no-repeat;
+}
+
+app-root {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body,
+input,
+button,
+textarea {
+    font: 500 2rem "Abel";
+    color: var(--color-text-base);
+    text-transform: uppercase;
+}
+
+button {
+    border: none;
+    border-radius: 5px;
+    padding: 1rem;
+    color: var(--color-text-base);
+    background-color: var(--color-background);
+    outline: none;
+    &.drop-button {
+        box-shadow: var(--drop-shadow);
+    }
+    &.inner-button {
+        box-shadow: var(--inner-shadow);
+    }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Abel", sans-serif;
+}
+
+.container {
+    width: 100vw;
+    // max-width: 700px;
+    min-height: calc(100vh - 50px);
+
+    padding: 0 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-content {
+    position: relative;
+}
+
+@media (min-width: 700px) {
+    :root {
+        font-size: 62.5%;
+    }
+}
+
+@supports (padding-top: 20px) {
+    html {
+        --ion-safe-area-top: var(--ion-statusbar-padding);
+    }
+}
+
+@supports (padding-top: constant(safe-area-inset-top)) {
+    html {
+        --ion-safe-area-top: constant(safe-area-inset-top);
+        --ion-safe-area-bottom: constant(safe-area-inset-bottom);
+        --ion-safe-area-left: constant(safe-area-inset-left);
+        --ion-safe-area-right: constant(safe-area-inset-right);
+    }
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+    html {
+        --ion-safe-area-top: env(safe-area-inset-top);
+        --ion-safe-area-bottom: env(safe-area-inset-bottom);
+        --ion-safe-area-left: env(safe-area-inset-left);
+        --ion-safe-area-right: env(safe-area-inset-right);
+    }
+}
+
+[routerLink] {
+    outline: none;
+}
