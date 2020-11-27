@@ -15,7 +15,7 @@ const routes: Routes = [
     component: WebxrApplicationComponent,
   },
   {
-    path: '/test',
+    path: '**',
     component: MainComponent,
   },
 ];

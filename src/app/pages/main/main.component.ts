@@ -3,6 +3,8 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import * as THREE from 'three';
 
+import { createMaterial, loadFont } from '../../utils/functions';
+
 /* #Endregion Imports*/
 
 let _this;
@@ -43,7 +45,7 @@ export class MainComponent implements AfterViewInit {
     fov: 75,
     aspect: window.innerWidth / window.innerHeight,
     near: 0.1,
-    far: 5,
+    far: 100,
   };
 
 
@@ -51,9 +53,9 @@ export class MainComponent implements AfterViewInit {
    * Contém as propriedades da caixa
    */
   private readonly boxGeometryProperties = {
-    width: 1,
-    height: 1,
-    depth: 1,
+    width: 5,
+    height: 5,
+    depth: 5,
   }
 
   /*** 
@@ -107,6 +109,18 @@ export class MainComponent implements AfterViewInit {
   );
 
   /*** 
+   * O loader de fontes
+   */
+  private fontLoader = new THREE.FontLoader();
+
+  /*** 
+   * A fonte utilizada em alguma malha
+   */
+  private font: any;
+
+  private fontGeometry: THREE.TextBufferGeometry;
+
+  /*** 
    * O objeto que representa uma caixa
    */
   private cube: THREE.Mesh<any, any> = new THREE.Mesh(this.boxGeometry, this.boxMaterial);
@@ -119,6 +133,7 @@ export class MainComponent implements AfterViewInit {
    * Método chamado após iniciar as views
    */
   async ngAfterViewInit(): Promise<void> {
+    this.font = await loadFont(this,'https://threejsfundamentals.org/threejs/resources/threejs/fonts/helvetiker_regular.typeface.json');
 
     await this.makeThree();
   }
@@ -139,11 +154,29 @@ export class MainComponent implements AfterViewInit {
     console.log(this.threeApplication.nativeElement);
 
     this.scene.add(this.cube);
-    this.camera.position.z = 3;
+    this.camera.position.z = 20;
 
     this.boxLight.position.set(-1, 2, 4);
     this.scene.add(this.boxLight);
+    
+    this.fontGeometry = new THREE.TextBufferGeometry('Error 404', {
+      font: this.font,
+      size: 2,
+      height: .2,
+      curveSegments: 1,
+      bevelEnabled: true,
+      bevelThickness: .5,
+      bevelSize: 0,
+      bevelSegments: 5,      
+    });
 
+    
+    const fontMesh = new THREE.Mesh(this.fontGeometry, createMaterial());    
+    this.scene.add(fontMesh);
+    this.fontGeometry.computeBoundingBox();
+    this.fontGeometry.boundingBox.getCenter(fontMesh.position).multiplyScalar(-1);
+    fontMesh.position.y += 10;    
+    
     this.renderer.render(this.scene, this.camera);
 
     requestAnimationFrame(this.animateCube);
