@@ -19,6 +19,7 @@
     "@angular/platform-browser": "~10.0.11",
     "@angular/platform-browser-dynamic": "~10.0.11",
     "@angular/router": "~10.0.11",
+    "ngrok": "^3.3.0",
     "rxjs": "~6.5.5",
     "three": "^0.123.0",
     "tslib": "^2.0.0",

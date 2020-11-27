@@ -7,6 +7,8 @@ import { ARButton } from '../../threeJs/jsm/webxr/ARButton.js';
 
 /* #Endregion Imports*/
 
+let _this;
+
 @Component({
   selector: 'app-webxr-application',
   templateUrl: './webxr-application.component.html',
@@ -16,7 +18,9 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
   /* #region Constructor*/
 
-  constructor() { }
+  constructor() {
+    _this = this;
+  }
 
   /* #Endregion Constructor*/
 
@@ -38,7 +42,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
   async ngAfterViewInit(): Promise<void> {
 
     await this.init();
-    // await this.animate();
+    await this.animate();
   }
 
   /* #Endregion LifeCycle Events*/
@@ -66,9 +70,9 @@ export class WebxrApplicationComponent implements AfterViewInit {
   public controller;
 
   /*** 
-   * 
+   * O retículo de mirar da aplicação
    */
-  public reticle;
+  public reticle: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
 
   /*** 
    * 
@@ -80,11 +84,16 @@ export class WebxrApplicationComponent implements AfterViewInit {
    */
   public hitTestSourceRequested = false;
 
+  /*** 
+   * A geometria do cilindro 
+   */
+  public cylinderGeometry = new THREE.CylinderBufferGeometry(0.2, 0.2, 0.2, 32).translate(0, 0.1, 0);
+
   /* #Endregion Public Properties*/
 
   /* #region Public Methods*/
 
-  public async init(): Promise<void> {
+  public init = async (): Promise<void> => {
     this.scene = new THREE.Scene();
 
     this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
@@ -100,29 +109,28 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.container.nativeElement.appendChild(this.renderer.domElement);
 
     this.page.nativeElement.appendChild(ARButton.createButton(this.renderer, { requiredFeatures: ['hit-test'] }));
-
-    const geometry = new THREE.CylinderBufferGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
-    this.reticle = new THREE.Mesh(
-      new THREE.RingBufferGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
-      new THREE.MeshBasicMaterial()
-    );
-    this.reticle.matrixAutoUpdate = false;
-    this.reticle.visible = false;
-    this.scene.add(this.reticle);
-
+    
     this.controller = this.renderer.xr.getController(0);
-    this.controller.addEventListener('select', this.onSelect(geometry));
+    this.controller.addEventListener('select', this.onSelect);
     this.scene.add(this.controller);
-
+    
+        this.reticle = new THREE.Mesh(
+          new THREE.RingBufferGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+          new THREE.MeshBasicMaterial()
+        );
+        this.reticle.matrixAutoUpdate = false;
+        this.reticle.visible = false;
+        this.scene.add(this.reticle);
+    
     window.addEventListener('resize', this.onWindowResize, false);
   }
 
   /*** 
    * Método chamado para animar um objeto
    */
-  public animate() {
+  public async animate(): Promise<void> {
 
-    this.renderer.setAnimationLoop(this.render);
+    return void await this.renderer.setAnimationLoop(this.render);
   }
 
   /*** 
@@ -140,10 +148,11 @@ export class WebxrApplicationComponent implements AfterViewInit {
       if (this.hitTestSourceRequested === false) {
 
         session.requestReferenceSpace('viewer').then(function (referenceSpace) {
+          console.log('referenceSpace',referenceSpace);
 
           session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
-
-            this.hitTestSource = source;
+            console.log('source',source);
+            _this.hitTestSource = source;
 
           });
 
@@ -151,8 +160,8 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
         session.addEventListener('end', function () {
 
-          this.hitTestSourceRequested = false;
-          this.hitTestSource = null;
+          _this.hitTestSourceRequested = false;
+          _this.hitTestSource = null;
 
         });
 
@@ -191,15 +200,13 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
   /*** 
    * Método chamado ao selecionar um objeto
-   * 
-   * @param geometry O objeto a ser selecionado
    */
-  private onSelect = (geometry: THREE.BufferGeometry): void => {
-
+  private onSelect = (): void => {
+    
     if (this.reticle.visible) {
 
       const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-      const mesh = new THREE.Mesh(geometry, material);
+      const mesh = new THREE.Mesh(this.cylinderGeometry, material);
       mesh.position.setFromMatrixPosition(this.reticle.matrix);
       mesh.scale.y = Math.random() * 2 + 1;
       this.scene.add(mesh);
@@ -209,7 +216,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
   /*** 
    * Método chamado ao mudar a forma da janela
    */
-  private onWindowResize = () => {
+  private onWindowResize = (): void => {
 
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
