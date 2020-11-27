@@ -1,4 +1,14 @@
 <div class="webxr" #webxrPage>
 
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" (click)="closeNav()">&times;</a>
+        <a href="#">Item_1</a>
+        <a href="#">Item_2</a>
+        <a href="#">Item_3</a>
+        <a href="#">Item_4</a>
+    </div>
+
+    <span id="openBtn" (click)="openNav()">&#9776; open</span>
+
     <div #webxrContainer></div>
 </div>

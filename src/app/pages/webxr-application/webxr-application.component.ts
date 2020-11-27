@@ -226,4 +226,26 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
   /* #Endregion Private Methods*/
 
+  /* #region Nav Methods*/
+  
+  /*** 
+   * O método que abre o navbar
+   */
+  public openNav():void {
+    console.log('open');
+    document.getElementById("mySidenav").style.width = "250px";
+    document.getElementById("openBtn").style.left = "-100vw";
+  }
+  
+  /*** 
+   * O método que fecha o navbar
+   */
+  public closeNav():void {
+    console.log('close');
+    document.getElementById("mySidenav").style.width = "0";
+    document.getElementById("openBtn").style.left = "1rem";
+  }
+  
+  /* #Endregion Nav Methods*/
+
 }
