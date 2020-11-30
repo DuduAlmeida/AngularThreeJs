@@ -285,6 +285,11 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  /*** 
+   * O método que cria o objeto atual
+   * 
+   * @note Caso não tenha sido selecionado algum objeto no sidebar, ele retorna um cilindro
+   */
   private createCurrentObject = (): any => {
 
     if (this.currentObject)
