@@ -290,7 +290,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
    * 
    * @note Caso não tenha sido selecionado algum objeto no sidebar, ele retorna um cilindro
    */
-  private createCurrentObject = (): any => {
+  private createCurrentObject = (): THREE.Mesh | THREE.Group => {
 
     if (this.currentObject)
       return this.currentObject.clone();
