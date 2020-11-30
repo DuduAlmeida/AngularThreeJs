@@ -99,7 +99,12 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
   public pmremGenerator: THREE.PMREMGenerator;
 
-  public currentObject;
+  /*** 
+   * A luminosidade da caixa
+   */
+  private directionalLight: THREE.DirectionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+
+  public currentObject?: THREE.Group = null;
 
   /* #Endregion Public Properties*/
 
@@ -111,11 +116,13 @@ export class WebxrApplicationComponent implements AfterViewInit {
   public init = async (): Promise<void> => {
     this.scene = new THREE.Scene();
 
-    this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+    this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 5000);
+    this.camera.position.z = 10;
 
     const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
     light.position.set(0.5, 1, 0.25);
     this.scene.add(light);
+
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -217,37 +224,33 @@ export class WebxrApplicationComponent implements AfterViewInit {
    */
   public loadModel(model: string) {
 
-    var loader = new GLTFLoader().setPath('./app/pages/webxr-application/3d/');
-    console.log(loader);
-    loader.load(model, (glb) => {
+    new RGBELoader()
+      .setDataType(THREE.UnsignedByteType)
+      .setPath('https://casadocodigolojastoragdu.blob.core.windows.net/threejsapplication/')
+      .load('photo_studio_01_1k.hdr', (texture) => {
 
-      this.currentObject = glb.scene;
-      this.scene.add(this.currentObject);
+        let envmap = this.pmremGenerator.fromEquirectangular(texture).texture;
 
-      this.render(1, true);
-    });
+        this.scene.environment = envmap;
+        texture.dispose();
+        this.pmremGenerator.dispose();
+        // this.render(1, true);
 
-    // new RGBELoader()
-    //   .setDataType(THREE.UnsignedByteType)
-    //   .setPath('./textures/')
-    //   .load('photo_studio_01_1k.hdr', (texture) => {
+        var loader = new GLTFLoader()
+          .setPath('https://casadocodigolojastoragdu.blob.core.windows.net/threejsapplication/');
+        loader.load(model, (glb) => {
 
-    //     let envmap = this.pmremGenerator.fromEquirectangular(texture).texture;
+          this.currentObject = glb.scene;
+          // this.scene.add(this.currentObject);
 
-    //     this.scene.environment = envmap;
-    //     texture.dispose();
-    //     this.pmremGenerator.dispose();
-    //     this.render(1, true);
+          // this.render(1, true);
+        }, undefined, function (error) {
 
-    //     var loader = new GLTFLoader();
-    //     loader.load('3d/'+model, (glb) => {
+          console.error(error);
+        });
+      });
 
-    //       this.currentObject = glb.scene;
-    //       this.scene.add(this.currentObject);
-
-    //       this.render(1, true);
-    //     });
-    //   });
+    this.closeNav();
   }
 
   /* #Endregion Public Methods*/
@@ -261,11 +264,13 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
     if (this.reticle.visible) {
 
-      const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-      const mesh = new THREE.Mesh(this.cylinderGeometry, material);
+      const mesh = this.createCurrentObject();
       mesh.position.setFromMatrixPosition(this.reticle.matrix);
       mesh.scale.y = Math.random() * 2 + 1;
       this.scene.add(mesh);
+
+      this.directionalLight.position.set(-1, 2, 4);
+      this.scene.add(this.directionalLight);
     }
   }
 
@@ -280,6 +285,16 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  private createCurrentObject = (): any => {
+
+    if (this.currentObject)
+      return this.currentObject.clone();
+
+
+    const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
+    return new THREE.Mesh(this.cylinderGeometry, material);
+  }
+
   /* #Endregion Private Methods*/
 
   /* #region Nav Methods*/
@@ -288,7 +303,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
    * O método que abre o navbar
    */
   public openNav(): void {
-    console.log('open');
+    // console.log('open');
     document.getElementById("mySidenav").style.width = "250px";
     document.getElementById("openBtn").style.left = "-100vw";
   }
@@ -297,7 +312,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
    * O método que fecha o navbar
    */
   public closeNav(): void {
-    console.log('close');
+    // console.log('close');
     document.getElementById("mySidenav").style.width = "0";
     document.getElementById("openBtn").style.left = "1rem";
   }
