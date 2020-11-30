@@ -17,16 +17,16 @@ export async function loadFont(_this:any , url: string): Promise<any> {
 }
 
 /*** 
- * Método que cria uma material e retorna o mesmo
+ * Função que cria um material
  */
 export function createMaterial(): THREE.MeshPhongMaterial {
     const material = new THREE.MeshPhongMaterial({
         side: THREE.DoubleSide,
     });
 
-    const hue = Math.random();
-    const saturation = 1;
-    const luminance = .5;
+    // const hue = Math.random();
+    // const saturation = 1;
+    // const luminance = .5;
     // material.color.setHSL(hue, saturation, luminance);
     material.color = new THREE.Color(0x44aa88);
 

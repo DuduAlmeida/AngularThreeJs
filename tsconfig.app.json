@@ -3,7 +3,10 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    "types": [],
+  },
+  "angularCompilerOptions": {
+    "disableTypeScriptVersionCheck": true,
   },
   "files": [
     "src/main.ts",
@@ -11,5 +14,6 @@
   ],
   "include": [
     "src/**/*.d.ts"
+    // , "src/app/threeJs/jsm/loaders/GLTFLoader.d.ts"    
   ]
 }

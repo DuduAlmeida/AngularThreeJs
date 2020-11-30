@@ -18,7 +18,7 @@ import { WebxrApplicationComponent } from './pages/webxr-application/webxr-appli
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

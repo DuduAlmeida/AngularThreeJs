@@ -3,12 +3,20 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 
 import * as THREE from 'three';
+import { OrbitControls } from './../../threeJs/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from './../../threeJs/jsm/loaders/GLTFLoader.js';
+import { RGBELoader } from './../../threeJs/jsm/loaders/RGBELoader.js';
+import { RoughnessMipmapper } from './../../threeJs/jsm/utils/RoughnessMipmapper.js';
 import { ARButton } from '../../threeJs/jsm/webxr/ARButton.js';
+import { PMREMGenerator } from 'three';
 
 /* #Endregion Imports*/
 
 let _this;
 
+/*** 
+ * O componente que faz uma aplicação AR
+ */
 @Component({
   selector: 'app-webxr-application',
   templateUrl: './webxr-application.component.html',
@@ -80,7 +88,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
   public hitTestSource = null;
 
   /*** 
-   * 
+   * Diz se foi solicitado o hit para adicionar o objeto
    */
   public hitTestSourceRequested = false;
 
@@ -89,10 +97,17 @@ export class WebxrApplicationComponent implements AfterViewInit {
    */
   public cylinderGeometry = new THREE.CylinderBufferGeometry(0.2, 0.2, 0.2, 32).translate(0, 0.1, 0);
 
+  public pmremGenerator: THREE.PMREMGenerator;
+
+  public currentObject;
+
   /* #Endregion Public Properties*/
 
   /* #region Public Methods*/
 
+  /*** 
+   * Método que inicia a aplicação 
+   */
   public init = async (): Promise<void> => {
     this.scene = new THREE.Scene();
 
@@ -108,20 +123,23 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.renderer.xr.enabled = true;
     this.container.nativeElement.appendChild(this.renderer.domElement);
 
+    this.pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+    this.pmremGenerator.compileEquirectangularShader();
+
     this.page.nativeElement.appendChild(ARButton.createButton(this.renderer, { requiredFeatures: ['hit-test'] }));
-    
+
     this.controller = this.renderer.xr.getController(0);
     this.controller.addEventListener('select', this.onSelect);
     this.scene.add(this.controller);
-    
-        this.reticle = new THREE.Mesh(
-          new THREE.RingBufferGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
-          new THREE.MeshBasicMaterial()
-        );
-        this.reticle.matrixAutoUpdate = false;
-        this.reticle.visible = false;
-        this.scene.add(this.reticle);
-    
+
+    this.reticle = new THREE.Mesh(
+      new THREE.RingBufferGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+      new THREE.MeshBasicMaterial()
+    );
+    this.reticle.matrixAutoUpdate = false;
+    this.reticle.visible = false;
+    this.scene.add(this.reticle);
+
     window.addEventListener('resize', this.onWindowResize, false);
   }
 
@@ -148,10 +166,10 @@ export class WebxrApplicationComponent implements AfterViewInit {
       if (this.hitTestSourceRequested === false) {
 
         session.requestReferenceSpace('viewer').then(function (referenceSpace) {
-          console.log('referenceSpace',referenceSpace);
+          console.log('referenceSpace', referenceSpace);
 
           session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
-            console.log('source',source);
+            console.log('source', source);
             _this.hitTestSource = source;
 
           });
@@ -194,6 +212,44 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
   }
 
+  /*** 
+   * Método que carrega um modelo
+   */
+  public loadModel(model: string) {
+
+    var loader = new GLTFLoader().setPath('./app/pages/webxr-application/3d/');
+    console.log(loader);
+    loader.load(model, (glb) => {
+
+      this.currentObject = glb.scene;
+      this.scene.add(this.currentObject);
+
+      this.render(1, true);
+    });
+
+    // new RGBELoader()
+    //   .setDataType(THREE.UnsignedByteType)
+    //   .setPath('./textures/')
+    //   .load('photo_studio_01_1k.hdr', (texture) => {
+
+    //     let envmap = this.pmremGenerator.fromEquirectangular(texture).texture;
+
+    //     this.scene.environment = envmap;
+    //     texture.dispose();
+    //     this.pmremGenerator.dispose();
+    //     this.render(1, true);
+
+    //     var loader = new GLTFLoader();
+    //     loader.load('3d/'+model, (glb) => {
+
+    //       this.currentObject = glb.scene;
+    //       this.scene.add(this.currentObject);
+
+    //       this.render(1, true);
+    //     });
+    //   });
+  }
+
   /* #Endregion Public Methods*/
 
   /* #region Private Methods*/
@@ -202,7 +258,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
    * Método chamado ao selecionar um objeto
    */
   private onSelect = (): void => {
-    
+
     if (this.reticle.visible) {
 
       const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
@@ -227,25 +283,25 @@ export class WebxrApplicationComponent implements AfterViewInit {
   /* #Endregion Private Methods*/
 
   /* #region Nav Methods*/
-  
+
   /*** 
    * O método que abre o navbar
    */
-  public openNav():void {
+  public openNav(): void {
     console.log('open');
     document.getElementById("mySidenav").style.width = "250px";
     document.getElementById("openBtn").style.left = "-100vw";
   }
-  
+
   /*** 
    * O método que fecha o navbar
    */
-  public closeNav():void {
+  public closeNav(): void {
     console.log('close');
     document.getElementById("mySidenav").style.width = "0";
     document.getElementById("openBtn").style.left = "1rem";
   }
-  
+
   /* #Endregion Nav Methods*/
 
 }
