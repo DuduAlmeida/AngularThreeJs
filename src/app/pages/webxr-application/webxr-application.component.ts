@@ -71,12 +71,12 @@ export class WebxrApplicationComponent implements AfterViewInit {
   /*** 
    * O renderizador da aplicação
    */
-  public renderer;
+  public renderer: THREE.WebGLRenderer;
 
   /*** 
    * O controlador da aplicação
    */
-  public controller;
+  public controller: any;
 
   /*** 
    * O retículo de mirar da aplicação
@@ -122,6 +122,12 @@ export class WebxrApplicationComponent implements AfterViewInit {
     requiredFeatures: ['hit-test'],
     optionalFeatures: ['dom-overlay'],
   }
+
+  public touchDown: boolean;
+  public touchX: number;
+  public touchY: number;
+  public deltaX: number;
+  public deltaY: number;
 
   /* #Endregion Public Properties*/
 
@@ -187,6 +193,33 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.placeButton.nativeElement.addEventListener('click', () => {
       this.arPlace();
     });
+
+    this.renderer.domElement.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.touchDown = true;
+      this.touchX = e.touches[0].pageX;
+      this.touchY = e.touches[0].pageY;
+    }, false);
+
+    this.renderer.domElement.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.touchDown = false;
+    }, false);
+
+    this.renderer.domElement.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      
+      if(!this.touchDown)
+        return void 0;
+
+      this.deltaX = e.touches[0].pageX - this.touchX;
+      this.deltaY = e.touches[0].pageY - this.touchY;
+      this.touchX = e.touches[0].pageX;
+      this.touchY = e.touches[0].pageY;
+
+      this.rotateObject();
+    }, false);
+
   }
 
   /*** 
@@ -310,6 +343,14 @@ export class WebxrApplicationComponent implements AfterViewInit {
       });
 
     this.closeNav();
+  }
+
+  public rotateObject = ( ) =>{
+    if(this.currentObject){
+      this.currentObject.rotation.y += this.deltaX / 100;
+      // this.currentObject.rotation.x += this.deltaX / 100;
+      // this.currentObject.rotation.y += this.deltaY / 100;
+    }
   }
 
   /* #Endregion Public Methods*/
