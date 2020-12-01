@@ -39,6 +39,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
    */
   @ViewChild('webxrPage') page: ElementRef<HTMLCanvasElement>;
   @ViewChild('webxrContainer') container: ElementRef<HTMLCanvasElement>;
+  @ViewChild('placeButton') placeButton: ElementRef<HTMLButtonElement>;
 
   /* #Endregion Public Properties*/
 
@@ -104,7 +105,23 @@ export class WebxrApplicationComponent implements AfterViewInit {
    */
   private directionalLight: THREE.DirectionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
 
+  /*** 
+   * O objeto atual da aplicação
+   */
   public currentObject?: THREE.Group = null;
+
+  /*** 
+   * O controlador do objeto
+   */
+  public controls: OrbitControls;
+
+  /*** 
+   * As opções da aplicação AR
+   */
+  public options: any = {
+    requiredFeatures: ['hit-test'],
+    optionalFeatures: ['dom-overlay'],
+  }
 
   /* #Endregion Public Properties*/
 
@@ -133,7 +150,20 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.pmremGenerator = new THREE.PMREMGenerator(this.renderer);
     this.pmremGenerator.compileEquirectangularShader();
 
-    this.page.nativeElement.appendChild(ARButton.createButton(this.renderer, { requiredFeatures: ['hit-test'] }));
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.addEventListener('change', this.render);
+    this.controls.minDistance = 2;
+    this.controls.maxDistance = 10;
+    this.controls.target.set(0, 0, -.2);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = .15;
+
+
+    this.options.domOverlay = { root: document.getElementById('content') }
+
+    this.page.nativeElement.appendChild(ARButton.createButton(this.renderer, this.options));
+    // this.page.nativeElement.appendChild(ARButton.createButton(this.renderer, { requiredFeatures: ['hit-test'] }));
+
 
     this.controller = this.renderer.xr.getController(0);
     this.controller.addEventListener('select', this.onSelect);
@@ -148,6 +178,15 @@ export class WebxrApplicationComponent implements AfterViewInit {
     this.scene.add(this.reticle);
 
     window.addEventListener('resize', this.onWindowResize, false);
+
+    document.getElementById('ARButton').addEventListener('click', () => {
+      if (this.currentObject)
+        this.scene.remove(this.currentObject);
+    });
+
+    this.placeButton.nativeElement.addEventListener('click', () => {
+      this.arPlace();
+    });
   }
 
   /*** 
@@ -155,7 +194,9 @@ export class WebxrApplicationComponent implements AfterViewInit {
    */
   public async animate(): Promise<void> {
 
-    return void await this.renderer.setAnimationLoop(this.render);
+    await this.renderer.setAnimationLoop(this.render);
+    requestAnimationFrame(this.animate);
+    return void this.controls.update();
   }
 
   /*** 
@@ -163,7 +204,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
    * 
    * @param timestamp Valor provido da função que chama esse método, seria o horário atual
    */
-  public render = (timestamp, frame) => {
+  public render = (timestamp?: any, frame?: any) => {
 
     if (frame) {
 
@@ -183,11 +224,18 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
         });
 
-        session.addEventListener('end', function () {
+        session.addEventListener('end', () => {
 
-          _this.hitTestSourceRequested = false;
-          _this.hitTestSource = null;
+          this.hitTestSourceRequested = false;
+          this.hitTestSource = null;
 
+          this.reticle.visible = false;
+
+          var box = new THREE.Box3();
+          box.setFromObject(this.currentObject);
+          box.getCenter(this.controls.target);
+
+          document.getElementById('place-button').style.display = 'none';
         });
 
         this.hitTestSourceRequested = true;
@@ -204,6 +252,8 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
           this.reticle.visible = true;
           this.reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+
+          document.getElementById('place-button').style.display = 'block';
 
         } else {
 
@@ -234,16 +284,25 @@ export class WebxrApplicationComponent implements AfterViewInit {
         this.scene.environment = envmap;
         texture.dispose();
         this.pmremGenerator.dispose();
-        // this.render(1, true);
+
+        // this.renderer.render(this.scene, this.camera);
 
         var loader = new GLTFLoader()
           .setPath('https://casadocodigolojastoragdu.blob.core.windows.net/threejsapplication/');
         loader.load(model, (glb) => {
 
-          this.currentObject = glb.scene;
-          // this.scene.add(this.currentObject);
+          if (this.currentObject)
+            this.scene.remove(this.currentObject);
 
-          // this.render(1, true);
+          this.currentObject = glb.scene;
+          this.scene.add(this.currentObject);
+
+          let box = new THREE.Box3();
+          box.setFromObject(this.currentObject);
+          box.getCenter(this.controls.target);
+          this.controls.update()
+
+          this.renderer.render(this.scene, this.camera);
         }, undefined, function (error) {
 
           console.error(error);
@@ -258,7 +317,7 @@ export class WebxrApplicationComponent implements AfterViewInit {
   /* #region Private Methods*/
 
   /*** 
-   * Método chamado ao selecionar um objeto
+   * Método chamado ao selecionar ou clicar para surgir um objeto
    */
   private onSelect = (): void => {
 
@@ -266,12 +325,20 @@ export class WebxrApplicationComponent implements AfterViewInit {
 
       const mesh = this.createCurrentObject();
       mesh.position.setFromMatrixPosition(this.reticle.matrix);
-      mesh.scale.y = Math.random() * 2 + 1;
       this.scene.add(mesh);
 
       this.directionalLight.position.set(-1, 2, 4);
       this.scene.add(this.directionalLight);
     }
+  }
+
+  /*** 
+   * Método chamado ao tentar colocar um objeto no modo AR
+   */
+  private arPlace = (): void => {
+    const mesh = this.createCurrentObject();
+    mesh.position.setFromMatrixPosition(this.reticle.matrix);
+    this.scene.add(mesh);
   }
 
   /*** 
@@ -293,11 +360,13 @@ export class WebxrApplicationComponent implements AfterViewInit {
   private createCurrentObject = (): THREE.Mesh | THREE.Group => {
 
     if (this.currentObject)
-      return this.currentObject.clone();
-
+      // return this.currentObject.clone();  //Retorna sempre um novo objeto
+      return this.currentObject;  //Retorna sempre o mesmo objeto
 
     const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-    return new THREE.Mesh(this.cylinderGeometry, material);
+    const mesh = new THREE.Mesh(this.cylinderGeometry, material);
+    mesh.scale.y = Math.random() * 2 + 1;
+    return mesh;
   }
 
   /* #Endregion Private Methods*/

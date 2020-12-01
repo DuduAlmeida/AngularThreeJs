@@ -52,6 +52,15 @@
         z-index: 10;
         transition: all 2s ease-in-out;
     }
+
+    #place-button{
+        position: absolute;
+        bottom: 20px;
+        left: calc(50% - 50px);
+        width: 100px;
+        height: 35px;
+        display: none;
+    }
 }
 
 @media screen and (max-height: 450px) {

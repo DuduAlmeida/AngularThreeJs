@@ -1,15 +1,21 @@
 <div class="webxr" #webxrPage>
 
-    <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" (click)="closeNav()">&times;</a>
-        <a class="ar-object" href="#" (click)="loadModel('baby-mario.glb')">Baby Mario</a>
-        <a class="ar-object" href="#" (click)="loadModel('infected.glb')">Infected</a>
-        <a class="ar-object" href="#" (click)="loadModel('kirito.glb')">Kirito</a>
-        <a class="ar-object" href="#" (click)="loadModel('paladin.glb')">Paladin</a>
-        <a class="ar-object" href="#" (click)="loadModel('paladino.gltf')">Paladino</a>
+    <div id="content" #content>
+
+        <div id="mySidenav" class="sidenav">
+            <a href="javascript:void(0)" class="closebtn" (click)="closeNav()">&times;</a>
+            <a class="ar-object" href="#" (click)="loadModel('baby-mario.glb')">Baby Mario</a>
+            <a class="ar-object" href="#" (click)="loadModel('infected.glb')">Infected</a>
+            <a class="ar-object" href="#" (click)="loadModel('kirito.glb')">Kirito</a>
+            <a class="ar-object" href="#" (click)="loadModel('paladin.glb')">Paladin</a>
+            <a class="ar-object" href="#" (click)="loadModel('paladino.gltf')">Paladino</a>
+        </div>
+
+        <span id="openBtn" (click)="openNav()">&#9776; open</span>
+
+        <button type="button" #placeButton id="place-button">PLACE</button>
     </div>
 
-    <span id="openBtn" (click)="openNav()">&#9776; open</span>
 
     <div class="webxr--container" #webxrContainer></div>
 </div>
